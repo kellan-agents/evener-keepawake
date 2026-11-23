@@ -1,0 +1,9 @@
+{
+  "name": "evener-keepawake",
+  "version": "1.0.0",
+  "description": "Marks sessions busy/idle with marker files under ~/.local/state/evener-keepawake/ so the heartbeat service knows when evener is working and must keep the Sprite awake.",
+  "author": {
+    "name": "evener-keepawake maintainers"
+  },
+  "keywords": ["sprite", "keepawake", "fly-io"]
+}

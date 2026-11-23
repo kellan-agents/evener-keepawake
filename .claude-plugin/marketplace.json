@@ -1,0 +1,19 @@
+{
+  "name": "evener-keepawake",
+  "owner": {
+    "name": "evener-keepawake maintainers"
+  },
+  "metadata": {
+    "description": "evener keepawake plugin and heartbeat for Fly.io Sprites",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "evener-keepawake",
+      "source": "./plugins/evener-keepawake",
+      "description": "Records session busy state so the keepawake heartbeat can hold the Sprite awake while evener sessions, delegates, and background jobs run",
+      "version": "1.0.0",
+      "strict": true
+    }
+  ]
+}

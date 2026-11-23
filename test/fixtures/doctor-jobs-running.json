@@ -1,0 +1,24 @@
+{
+  "session_id": "test-sid-0001",
+  "jobs_path": "/home/user/.local/state/evener/projects/test-bucket-0001/sessions/test-sid-0001/jobs.jsonl",
+  "delegates_path": "/home/user/.local/state/evener/projects/test-bucket-0001/sessions/test-sid-0001/delegates.jsonl",
+  "jobs": [
+    {
+      "job_id": "job_test-0001",
+      "type": "shell",
+      "status": "running",
+      "reason": "",
+      "exit_code": null,
+      "output_bytes": 0,
+      "started_at": "2026-01-01T00:00:00.000000000Z",
+      "ended_at": null,
+      "command": "make build",
+      "description": "fixture running job",
+      "owner_session_id": "test-sid-0001",
+      "visible_to_session_id": "test-sid-0001",
+      "output_path": "/home/user/.local/state/evener/projects/test-bucket-0001/sessions/test-sid-0001/jobs/job_test-0001.log",
+      "terminal_notification_state": "pending"
+    }
+  ],
+  "delegates": []
+}
