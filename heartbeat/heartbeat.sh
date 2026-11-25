@@ -156,8 +156,19 @@ legacy_active_reason() {
   echo "active legacy session $sid"
 }
 
+# One resource line per beat so downstream reports (the morning note) can
+# compute overnight peaks. free's Mem row: $3 used, $7 available (kB).
+sample() {
+  local mem_used mem_avail swap_used disk_pct
+  read -r mem_used mem_avail <<<"$(free -k | awk '/^Mem:/{print $3, $7}')"
+  swap_used=$(free -k | awk '/^Swap:/{print $3}')
+  disk_pct=$(df -P / | awk 'NR==2{gsub(/%/,""); print $(NF-1)}')
+  log "sample mem_used_kb=${mem_used:-?} mem_avail_kb=${mem_avail:-?} swap_used_kb=${swap_used:-?} disk_used_pct=${disk_pct:-?}"
+}
+
 beat() {
   local reason=""
+  sample
   reason=$(fresh_marker || true)
   if [ -z "$reason" ]; then
     reason=$(live_work_reason || true)
