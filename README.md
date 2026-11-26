@@ -82,6 +82,10 @@ Then register the heartbeat as a service (persists across reboots):
   - every busy→idle transition logs the task release;
   - every ~15 min of idle logs `idle beat N [task=… markers=… live_daemons=…]`
     — `task=present` while idle means something else is holding a task;
+  - every beat logs a `sample …` resource line: memory/swap/disk plus the
+    cgroup counters Fly bills sprites on (`cpu_used_usec` cumulative CPU
+    time, `mem_cg_kb` cgroup memory), so downstream reports can compute
+    peaks and estimated Fly spend;
   - a frozen loop (Sprite pause, machine stall) logs
     `resumed after Ns gap (sprite pause or stall) …` on wake — that line is
     the sleep/wake record, since the whole service freezes with the Sprite;

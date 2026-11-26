@@ -78,7 +78,8 @@ EOF
   # from shadowing the stubs with real binaries.
   export HOME="$T/home"
   unset LEGACY_CUTOFF EVENER_KEEPAWAKE_LEGACY_CUTOFF \
-        EVENER_KEEPAWAKE_INTERVAL 2>/dev/null || true
+        EVENER_KEEPAWAKE_INTERVAL EVENER_KEEPAWAKE_CPU_STAT \
+        EVENER_KEEPAWAKE_MEMCG 2>/dev/null || true
 }
 
 puts() {
@@ -167,6 +168,23 @@ legacy_source_disabled_by_default() {
     || { echo "no idle path in log:"; cat "$T/state/heartbeat.log"; return 1; }
 }
 
+sample_line_has_fly_counters() {
+  # The sample line must carry the two counters Fly bills sprites on:
+  # cumulative CPU time (cgroup cpu.stat usage_usec) and cgroup memory
+  # (memory.current). Fixture files stand in for /sys/fs/cgroup so the
+  # assertion is exact, not a regex over whatever the host reports.
+  printf 'usage_usec 1234567890\nuser_usec 600000000\nsystem_usec 100000000\nnr_periods 0\n' \
+    >"$T/cpu.stat"
+  echo 2147483648 >"$T/memcg"   # bytes; 2 GiB in kB = 2097152
+  export EVENER_KEEPAWAKE_CPU_STAT="$T/cpu.stat"
+  export EVENER_KEEPAWAKE_MEMCG="$T/memcg"
+  bash "$ROOT/heartbeat/heartbeat.sh" --once || { echo "run failed"; return 1; }
+  grep -q 'cpu_used_usec=1234567890' "$T/state/heartbeat.log" \
+    || { echo "sample line lacks exact cpu_used_usec:"; grep sample "$T/state/heartbeat.log"; return 1; }
+  grep -q 'mem_cg_kb=2097152' "$T/state/heartbeat.log" \
+    || { echo "sample line lacks exact mem_cg_kb:"; grep sample "$T/state/heartbeat.log"; return 1; }
+}
+
 metadata_neutral() {
   # Needles are concatenated so this file itself carries no machine-identity
   # strings (they are checked for, never spelled out).
@@ -183,7 +201,8 @@ metadata_neutral() {
 cd "$ROOT"
 for c in fresh_marker_holds_task stale_marker_ignored \
          busy_to_idle_releases_task running_job_of_live_daemon_holds \
-         legacy_source_disabled_by_default metadata_neutral; do
+         legacy_source_disabled_by_default sample_line_has_fly_counters \
+         metadata_neutral; do
   run_case "$c"
 done
 

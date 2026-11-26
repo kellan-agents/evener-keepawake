@@ -50,6 +50,11 @@ MARKER_TTL="${EVENER_KEEPAWAKE_TTL:-3300}"
 # Set the cutoff to the plugin's install moment; empty disables the source.
 LEGACY_CUTOFF="${EVENER_KEEPAWAKE_LEGACY_CUTOFF:-${LEGACY_CUTOFF:-}}"
 ACTIVE_WINDOW="${EVENER_KEEPAWAKE_ACTIVE_WINDOW:-240}"
+# Fly bills sprites on cumulative CPU time (cgroup cpu.stat usage_usec) and
+# memory time, so the sample line carries both counters. Paths are overridable
+# for tests; "?" is logged when a counter file is absent (non-cgroup host).
+CPU_STAT_FILE="${EVENER_KEEPAWAKE_CPU_STAT:-/sys/fs/cgroup/cpu.stat}"
+MEMCG_FILE="${EVENER_KEEPAWAKE_MEMCG:-/sys/fs/cgroup/memory.current}"
 LOG_FILE="$STATE_DIR/heartbeat.log"
 MODE="${1:-}"
 
@@ -157,13 +162,17 @@ legacy_active_reason() {
 }
 
 # One resource line per beat so downstream reports (the morning note) can
-# compute overnight peaks. free's Mem row: $3 used, $7 available (kB).
+# compute overnight peaks and estimated Fly spend. free's Mem row: $3 used,
+# $7 available (kB). cpu_used_usec and mem_cg_kb are the cgroup counters Fly
+# meters sprites on (cumulative CPU time; memory.current converted to kB).
 sample() {
-  local mem_used mem_avail swap_used disk_pct
+  local mem_used mem_avail swap_used disk_pct cpu_usec mem_cg_kb
   read -r mem_used mem_avail <<<"$(free -k | awk '/^Mem:/{print $3, $7}')"
   swap_used=$(free -k | awk '/^Swap:/{print $3}')
   disk_pct=$(df -P / | awk 'NR==2{gsub(/%/,""); print $(NF-1)}')
-  log "sample mem_used_kb=${mem_used:-?} mem_avail_kb=${mem_avail:-?} swap_used_kb=${swap_used:-?} disk_used_pct=${disk_pct:-?}"
+  cpu_usec=$(awk '/^usage_usec/{print $2}' "$CPU_STAT_FILE" 2>/dev/null)
+  mem_cg_kb=$(( $(cat "$MEMCG_FILE" 2>/dev/null || echo 0) / 1024 ))
+  log "sample mem_used_kb=${mem_used:-?} mem_avail_kb=${mem_avail:-?} swap_used_kb=${swap_used:-?} disk_used_pct=${disk_pct:-?} cpu_used_usec=${cpu_usec:-?} mem_cg_kb=${mem_cg_kb:-?}"
 }
 
 beat() {
